@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediCare Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Login Page Styles */
+        .login-body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+            padding: 40px;
+            width: 100%;
+            max-width: 420px;
+            animation: slideIn 0.6s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #4f46e5, #06b6d4);
+            border-radius: 15px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .logo::before {
+            content: '⚕️';
+            font-size: 28px;
+        }
+
+        .logo-text {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 5px;
+        }
+
+        .logo-subtitle {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .auth-tabs {
+            display: flex;
+            background: #f1f5f9;
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 30px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #64748b;
+        }
+
+        .tab.active {
+            background: white;
+            color: #4f46e5;
+            box-shadow: 0 2px 8px rgba(79, 70, 229, 0.15);
+        }
+
+        .form-container {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .form-panel {
+            transition: transform 0.4s ease;
+        }
+
+        .form-panel.hidden {
+            transform: translateX(100%);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #374151;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .password-input-container {
+            position: relative;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #64748b;
+            font-size: 18px;
+        }
+
+        .google-btn {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            background: white;
+            color: #374151;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .google-btn:hover {
+            border-color: #d1d5db;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .google-icon {
+            width: 20px;
+            height: 20px;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%234285f4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="%2334a853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="%23fbbc05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="%23ea4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>') no-repeat center;
+            background-size: contain;
+        }
+
+        .divider {
+            text-align: center;
+            margin: 20px 0;
+            position: relative;
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #e5e7eb;
+        }
+
+        .divider span {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 0 20px;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(79, 70, 229, 0.3);
+        }
+
+        .forgot-password {
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .forgot-password a {
+            color: #4f46e5;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .forgot-password a:hover {
+            text-decoration: underline;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #4f46e5;
+        }
+
+        .checkbox-group label {
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 0;
+        }
+
+        /* Dashboard Styles */
+        .dashboard-body {
+            background-color: #f0f4f8;
+        }
+
+        .nav-link {
+            transition: all 0.3s ease;
+            padding-bottom: 4px;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #2563eb;
+            border-bottom: 2px solid #2563eb;
+        }
+        .module-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .module-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .chat-bubble {
+            max-width: 75%;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .hero-section {
+            background: linear-gradient(to right, #667eea, #764ba2);
+        }
+        #profile-dropdown {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        .history-panel {
+            position: fixed;
+            bottom: 1rem;
+            left: 1rem;
+            width: 20rem;
+            max-height: 16rem;
+            overflow-y: auto;
+            z-index: 50;
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Page -->
+    <div id="login-page" class="login-body">
+        <div class="login-container">
+            <div class="logo-section">
+                <div class="logo"></div>
+                <div class="logo-text">MediCare Pro</div>
+                <div class="logo-subtitle">Secure Healthcare Portal</div>
+            </div>
+
+            <div class="auth-tabs">
+                <div class="tab active" onclick="switchTab('login')">Login</div>
+                <div class="tab" onclick="switchTab('register')">Register</div>
+            </div>
+
+            <div class="form-container">
+                <div class="form-panel" id="loginPanel">
+                    <button class="google-btn" onclick="handleGoogleSignIn()">
+                        <span class="google-icon"></span>
+                        Sign in with Google
+                    </button>
+                    
+                    <div class="divider">
+                        <span>or continue with email</span>
+                    </div>
+
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label for="loginEmail">Email Address</label>
+                            <input type="email" id="loginEmail" class="form-input" placeholder="Enter your email" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="loginPassword">Password</label>
+                            <div class="password-input-container">
+                                <input type="password" id="loginPassword" class="form-input" placeholder="Enter your password" required>
+                                <span class="password-toggle" onclick="togglePassword('loginPassword')">👁️</span>
+                            </div>
+                        </div>
+
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="rememberMe">
+                            <label for="rememberMe">Remember me for 30 days</label>
+                        </div>
+
+                        <button type="submit" class="submit-btn">Sign In</button>
+
+                        <div class="forgot-password">
+                            <a href="#" onclick="handleForgotPassword()">Forgot your password?</a>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="form-panel hidden" id="registerPanel">
+                    <button class="google-btn" onclick="handleGoogleSignIn()">
+                        <span class="google-icon"></span>
+                        Sign up with Google
+                    </button>
+                    
+                    <div class="divider">
+                        <span>or create account with email</span>
+                    </div>
+
+                    <form id="registerForm">
+                        <div class="form-group">
+                            <label for="registerName">Full Name</label>
+                            <input type="text" id="registerName" class="form-input" placeholder="Enter your full name" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="registerEmail">Email Address</label>
+                            <input type="email" id="registerEmail" class="form-input" placeholder="Enter your email" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="registerPassword">Password</label>
+                            <div class="password-input-container">
+                                <input type="password" id="registerPassword" class="form-input" placeholder="Create a password" required>
+                                <span class="password-toggle" onclick="togglePassword('registerPassword')">👁️</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="confirmPassword">Confirm Password</label>
+                            <div class="password-input-container">
+                                <input type="password" id="confirmPassword" class="form-input" placeholder="Confirm your password" required>
+                                <span class="password-toggle" onclick="togglePassword('confirmPassword')">👁️</span>
+                            </div>
+                        </div>
+
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="agreeTerms" required>
+                            <label for="agreeTerms">I agree to the Terms of Service and Privacy Policy</label>
+                        </div>
+
+                        <button type="submit" class="submit-btn">Create Account</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Page -->
+    <div id="dashboard-page" class="dashboard-body text-gray-800 hidden">
+        <header class="bg-white shadow-md sticky top-0 z-50">
+            <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+                <div class="flex items-center space-x-8">
+                    <a href="#" class="nav-link active" onclick="showPage('home')">Home</a>
+                    <a href="#" class="nav-link" onclick="showPage('services')">Services</a>
+                    <a href="#" class="nav-link" onclick="showPage('about')">About</a>
+                </div>
+                <div class="text-3xl font-bold text-gray-800">
+                    <span class="text-blue-600">MediCare</span> Pro
+                </div>
+                <div class="flex items-center space-x-4 relative">
+                    <button id="audio-toggle-btn" class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <i class="fas fa-volume-up text-gray-600 text-xl"></i>
+                    </button>
+                    <button id="profile-btn" class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <i class="fas fa-user text-gray-600 text-xl"></i>
+                    </button>
+                    <div id="profile-dropdown" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20 hidden opacity-0 transform scale-95">
+                        <div id="user-info" class="px-4 py-2 text-sm text-gray-700 border-b">
+                            <div class="font-medium" id="user-name">Loading...</div>
+                            <div class="text-xs text-gray-500" id="user-email">Loading...</div>
+                        </div>
+                        <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"><i class="fas fa-user-circle mr-2"></i>My Profile</a>
+                        <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onclick="handleLogout()"><i class="fas fa-sign-out-alt mr-2"></i>Logout</a>
+                    </div>
+                </div>
+            </nav>
+        </header>
+
+        <div class="container mx-auto p-6 flex space-x-6">
+            <main class="flex-grow">
+                <section id="home" class="page">
+                    <div class="hero-section text-white text-center p-16 rounded-lg mb-12 shadow-xl">
+                        <h1 class="text-5xl font-extrabold mb-4">Welcome to the Future of Healthcare</h1>
+                        <p class="text-xl">AI-powered insights for a healthier you. Instantly, accurately, and personally.</p>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div class="module-card bg-white p-6 rounded-lg shadow-lg" onclick="showPage('ai-assistant')">
+                            <div class="flex items-center justify-center h-16 w-16 rounded-full bg-blue-100 text-blue-600 mb-4"><i class="fas fa-robot text-2xl"></i></div>
+                            <h3 class="text-xl font-semibold mb-2">AI Health Assistant</h3>
+                            <p class="text-gray-600">Ask about symptoms, skin conditions via text, voice, or image.</p>
+                        </div>
+                        <div class="module-card bg-white p-6 rounded-lg shadow-lg" onclick="showPage('imaging-analysis')">
+                            <div class="flex items-center justify-center h-16 w-16 rounded-full bg-indigo-100 text-indigo-600 mb-4"><i class="fas fa-x-ray text-2xl"></i></div>
+                            <h3 class="text-xl font-semibold mb-2">Medical Imaging Analysis</h3>
+                            <p class="text-gray-600">Upload MRI or X-ray scans for an AI-powered analysis.</p>
+                        </div>
+                        <div class="module-card bg-white p-6 rounded-lg shadow-lg" onclick="showPage('hospital-finder')">
+                            <div class="flex items-center justify-center h-16 w-16 rounded-full bg-green-100 text-green-600 mb-4"><i class="fas fa-hospital text-2xl"></i></div>
+                            <h3 class="text-xl font-semibold mb-2">Hospital Finder</h3>
+                            <p class="text-gray-600">Find hospitals and clinics near you with ease.</p>
+                        </div>
+                        <div class="module-card bg-white p-6 rounded-lg shadow-lg" onclick="showPage('heart-prediction')">
+                            <div class="flex items-center justify-center h-16 w-16 rounded-full bg-red-100 text-red-600 mb-4"><i class="fas fa-heartbeat text-2xl"></i></div>
+                            <h3 class="text-xl font-semibold mb-2">Heart Disease Prediction</h3>
+                            <p class="text-gray-600">Assess your risk for heart disease based on key health metrics.</p>
+                        </div>
+                        <div class="module-card bg-white p-6 rounded-lg shadow-lg" onclick="showPage('stroke-prediction')">
+                            <div class="flex items-center justify-center h-16 w-16 rounded-full bg-yellow-100 text-yellow-600 mb-4"><i class="fas fa-brain text-2xl"></i></div>
+                            <h3 class="text-xl font-semibold mb-2">Stroke Prediction</h3>
+                            <p class="text-gray-600">Evaluate potential stroke risk factors with our AI tool.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="services" class="page hidden">
+                    <div class="text-center mb-12">
+                        <h1 class="text-4xl font-bold text-gray-800">Our Services</h1>
+                        <p class="text-lg text-gray-600">Leveraging AI to provide you with advanced medical insights.</p>
+                    </div>
+                    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div class="bg-white p-6 rounded-lg shadow-md">
+                            <i class="fas fa-comment-medical text-3xl text-blue-500 mb-4"></i>
+                            <h3 class="text-xl font-semibold mb-2">Symptom Checker</h3>
+                            <p>Describe your symptoms and get a preliminary analysis from our AI.</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-md">
+                            <i class="fas fa-camera text-3xl text-indigo-500 mb-4"></i>
+                            <h3 class="text-xl font-semibold mb-2">Skin Condition Analysis</h3>
+                            <p>Upload an image of a skin issue to get a possible identification.</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-md">
+                            <i class="fas fa-microphone-alt text-3xl text-green-500 mb-4"></i>
+                            <h3 class="text-xl font-semibold mb-2">Voice-based Queries</h3>
+                            <p>Use your voice to ask health questions for a hands-free experience.</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-md">
+                            <i class="fas fa-file-medical-alt text-3xl text-red-500 mb-4"></i>
+                            <h3 class="text-xl font-semibold mb-2">Medical Report Analysis</h3>
+                            <p>Upload your medical reports for a simplified summary and explanation.</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-md">
+                            <i class="fas fa-map-marked-alt text-3xl text-yellow-500 mb-4"></i>
+                            <h3 class="text-xl font-semibold mb-2">Location-based Services</h3>
+                            <p>Find specialized doctors and hospitals in your vicinity.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="about" class="page hidden">
+                    <div class="text-center mb-12">
+                        <h1 class="text-4xl font-bold text-gray-800">About MediCare Pro</h1>
+                    </div>
+                    <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-lg">
+                        <p class="text-lg text-gray-700 leading-relaxed">
+                            MediCare Pro is a revolutionary platform dedicated to making healthcare more accessible and understandable for everyone. Our mission is to empower individuals with AI-driven tools to take control of their health. We believe that by leveraging cutting-edge technology, we can bridge the gap between patients and medical knowledge, providing instant, reliable, and personalized health insights. Our platform is built on the principles of accuracy, privacy, and user-friendliness, ensuring a seamless and secure experience for all our users.
+                        </p>
+                    </div>
+                </section>
+
+                <section id="ai-assistant" class="page hidden">
+                    <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-lg">
+                        <button onclick="showPage('home')" class="mb-4 text-blue-600 hover:underline"><i class="fas fa-arrow-left mr-2"></i>Back to Home</button>
+                        <h2 class="text-2xl font-bold mb-4">AI Health Assistant</h2>
+                        <div id="chat-container" class="border rounded-lg p-4 h-96 overflow-y-auto bg-gray-50 mb-4"></div>
+                        <div class="flex items-center border rounded-lg p-2 bg-white">
+                            <input type="text" id="chat-input" class="flex-grow p-2 border-none focus:ring-0" placeholder="Type your message or describe the image...">
+                            <label for="chat-file-input" class="cursor-pointer px-3 text-gray-500 hover:text-blue-600">
+                                <i class="fas fa-paperclip"></i>
+                                <input type="file" id="chat-file-input" class="hidden" accept="image/*" onchange="handleFileSelect(event, 'chat')">
+                            </label>
+                            <button id="audio-btn" class="px-3 text-gray-500 hover:text-blue-600"><i class="fas fa-microphone"></i></button>
+                            <button id="send-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg ml-2 hover:bg-blue-700">Send</button>
+                        </div>
+                        <div id="chat-preview-container" class="mt-2"></div>
+                    </div>
+                </section>
+
+                <section id="imaging-analysis" class="page hidden">
+                    <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-lg">
+                        <button onclick="showPage('home')" class="mb-4 text-blue-600 hover:underline"><i class="fas fa-arrow-left mr-2"></i>Back to Home</button>
+                        <h2 class="text-2xl font-bold mb-4">Medical Imaging Analysis</h2>
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer" id="drop-zone">
+                            <input type="file" id="imaging-file-input" class="hidden" accept="image/jpeg, image/png, image/dicom" onchange="handleFileSelect(event, 'imaging')">
+                            <label for="imaging-file-input" class="cursor-pointer">
+                                <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                                <p>Drag & drop your MRI or X-ray here, or click to select a file.</p>
+                                <p class="text-sm text-gray-500">PNG, JPG, or DICOM files</p>
+                            </label>
+                        </div>
+                        <div id="imaging-preview-container" class="mt-4"></div>
+                        <button id="analyze-btn" class="w-full bg-indigo-600 text-white px-4 py-3 rounded-lg mt-4 hover:bg-indigo-700 disabled:bg-gray-400" disabled>Analyze Image</button>
+                        <div id="analysis-result" class="mt-6"></div>
+                    </div>
+                </section>
+
+                <section id="hospital-finder" class="page hidden">
+                    <div class="max-w-6xl mx-auto bg-white p-8 rounded-lg shadow-lg">
+                        <button onclick="showPage('home')" class="mb-4 text-blue-600 hover:underline"><i class="fas fa-arrow-left mr-2"></i>Back to Home</button>
+                        <h2 class="text-2xl font-bold mb-4">Hospital Finder</h2>
+                        <div class="mb-4">
+                            <label for="city-select" class="block text-lg font-medium text-gray-700">Select a Location:</label>
+                        <select id="city-select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                            <option value="20.5937,78.9629">India (Overall)</option>
+                            <option value="28.7041,77.1025">Delhi</option>
+                            <option value="19.0760,72.8777">Mumbai</option>
+                            <option value="12.9716,77.5946">Bengaluru</option>
+                            <option value="13.0827,80.2707">Chennai</option>
+                            <option value="22.5726,88.3639">Kolkata</option>
+                            <option value="17.3850,78.4867">Hyderabad</option>
+                            <option value="16.5167,80.6167">Vijayawada</option>
+                            <option value="16.7107,81.0952">Eluru</option>
+                            <option value="14.4426,79.9865">Nellore</option>
+                            <option value="26.915,75.820">Jaipur</option>
+                            <option value="9.9700,76.2800">Kochi</option>
+                        </select>
+                    </div>
+                    <div class="h-96 w-full rounded-lg bg-gray-200 flex items-center justify-center" id="map">
+                        <p class="text-gray-500">Loading Map...</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="heart-prediction" class="page hidden">
+                <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-lg">
+                    <button onclick="showPage('home')" class="mb-4 text-blue-600 hover:underline"><i class="fas fa-arrow-left mr-2"></i>Back to Home</button>
+                    <h2 class="text-2xl font-bold mb-4">Heart Disease Risk Predictor</h2>
+                    <form id="heart-form" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div><label class="block text-sm font-medium">Age</label><input type="number" name="Age" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></div>
+                        <div><label class="block text-sm font-medium">Sex</label><select name="Sex" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"><option>M</option><option>F</option></select></div>
+                        <div><label class="block text-sm font-medium">Chest Pain Type</label><select name="ChestPainType" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"><option>ATA</option><option>NAP</option><option>ASY</option><option>TA</option></select></div>
+                        <div><label class="block text-sm font-medium">Resting BP</label><input type="number" name="RestingBP" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
+                        <div><label class="block text-sm font-medium">Cholesterol</label><input type="number" name="Cholesterol" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
+                        <div><label class="block text-sm font-medium">Max HR</label><input type="number" name="MaxHR" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
+                        <div class="md:col-span-2"><button type="submit" class="w-full bg-red-600 text-white px-4 py-3 rounded-lg hover:bg-red-700">Predict Risk</button></div>
+                    </form>
+                    <div id="heart-prediction-result" class="mt-6"></div>
+                </div>
+            </section>
+
+            <section id="stroke-prediction" class="page hidden">
+                <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-lg">
+                    <button onclick="showPage('home')" class="mb-4 text-blue-600 hover:underline"><i class="fas fa-arrow-left mr-2"></i>Back to Home</button>
+                    <h2 class="text-2xl font-bold mb-4">Stroke Risk Predictor</h2>
+                    <form id="stroke-form" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div><label class="block text-sm font-medium">Age</label><input type="number" name="age" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
+                        <div><label class="block text-sm font-medium">Gender</label><select name="gender" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"><option>Male</option><option>Female</option></select></div>
+                        <div><label class="block text-sm font-medium">Hypertension</label><select name="hypertension" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"><option value="1">Yes</option><option value="0">No</option></select></div>
+                        <div><label class="block text-sm font-medium">Heart Disease</label><select name="heart_disease" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"><option value="1">Yes</option><option value="0">No</option></select></div>
+                        <div><label class="block text-sm font-medium">Avg. Glucose Level</label><input type="number" step="0.01" name="avg_glucose_level" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
+                        <div><label class="block text-sm font-medium">BMI</label><input type="number" step="0.1" name="bmi" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></div>
+                        <div class="md:col-span-2"><button type="submit" class="w-full bg-yellow-500 text-white px-4 py-3 rounded-lg hover:bg-yellow-600">Predict Risk</button></div>
+                    </form>
+                    <div id="stroke-prediction-result" class="mt-6"></div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+    
+    <footer class="bg-white mt-12 py-8 border-t">
+        <div class="container mx-auto px-6 text-center text-gray-600">
+            <p>© 2024 MediCare Pro. All rights reserved.</p>
+            <p class="text-sm mt-2">Disclaimer: This tool is for informational purposes only and does not constitute medical advice.</p>
+        </div>
+    </footer>
+</div>
+
+<script>
+    // Firebase configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyAABtPtSy9fyp5clLKSZheek5fVpnfA-hA",
+        authDomain: "medicare-pro-58d03.firebaseapp.com",
+        projectId: "medicare-pro-58d03",
+        storageBucket: "medicare-pro-58d03.firebasestorage.app",
+        messagingSenderId: "187325498633",
+        appId: "1:187325498633:web:87e83403c01abc07977fd8",
+        measurementId: "G-TW5QSBGLBH"
+    };
+    
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // State Management
+    let currentFileUpload = null;
+    let currentModule = '';
+    let mapInitialized = false;
+    let isAudioEnabled = true;
+    let searchHistory = [];
+    let map = null;
+    let currentUser = null;
+
+    // Check auth state on load
+    firebase.auth().onAuthStateChanged(function(user) {
+        if (user) {
+            currentUser = user;
+            showDashboard();
+            updateUserInfo();
+        } else {
+            showLoginPage();
+        }
+    });
+
+    function showLoginPage() {
+        document.getElementById('login-page').classList.remove('hidden');
+        document.getElementById('dashboard-page').classList.add('hidden');
+        document.body.className = '';
+    }
+
+    function showDashboard() {
+        document.getElementById('login-page').classList.add('hidden');
+        document.getElementById('dashboard-page').classList.remove('hidden');
+        document.body.className = 'dashboard-body';
+    }
+
+    function updateUserInfo() {
+        if (currentUser) {
+            const nameElement = document.getElementById('user-name');
+            const emailElement = document.getElementById('user-email');
+            if (nameElement && emailElement) {
+                nameElement.textContent = currentUser.displayName || 'User';
+                emailElement.textContent = currentUser.email;
+            }
+        }
+    }
+
+    // Login UI Functions
+    function switchTab(tab) {
+        const tabs = document.querySelectorAll('.tab');
+        const loginPanel = document.getElementById('loginPanel');
+        const registerPanel = document.getElementById('registerPanel');
+
+        tabs.forEach(t => t.classList.remove('active'));
+        
+        if (tab === 'login') {
+            tabs[0].classList.add('active');
+            loginPanel.classList.remove('hidden');
+            registerPanel.classList.add('hidden');
+        } else {
+            tabs[1].classList.add('active');
+            registerPanel.classList.remove('hidden');
+            loginPanel.classList.add('hidden');
+        }
+    }
+
+    function togglePassword(inputId) {
+        const input = document.getElementById(inputId);
+        const toggle = input.nextElementSibling;
+        
+        if (input.type === 'password') {
+            input.type = 'text';
+            toggle.textContent = '🙈';
+        } else {
+            input.type = 'password';
+            toggle.textContent = '👁️';
+        }
+    }
+
+    function handleForgotPassword() {
+        const email = prompt('Please enter your email address:');
+        if (email) {
+            auth.sendPasswordResetEmail(email)
+                .then(() => {
+                    alert(`Password reset link has been sent to: ${email}`);
+                })
+                .catch((error) => {
+                    alert(`Error: ${error.message}`);
+                });
+        }
+    }
+
+    // Firebase Auth Functions
+    async function handleLogin(event) {
+        event.preventDefault();
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        const rememberMe = document.getElementById('rememberMe').checked;
+        
+        const submitBtn = event.target.querySelector('.submit-btn');
+        submitBtn.textContent = 'Signing In...';
+        submitBtn.disabled = true;
+
+        try {
+            if (rememberMe) {
+                await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+            } else {
+                await auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
+            }
+            
+            const userCredential = await auth.signInWithEmailAndPassword(email, password);
+            console.log('Login successful:', userCredential.user);
+        } catch (error) {
+            alert(`Login Failed: ${error.message}`);
+        } finally {
+            submitBtn.textContent = 'Sign In';
+            submitBtn.disabled = false;
+        }
+    }
+
+    async function handleRegister(event) {
+        event.preventDefault();
+        const name = document.getElementById('registerName').value;
+        const email = document.getElementById('registerEmail').value;
+        const password = document.getElementById('registerPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        const agreeTerms = document.getElementById('agreeTerms').checked;
+        
+        if (password !== confirmPassword) {
+            alert('Passwords do not match');
+            return;
+        }
+        if (password.length < 6) {
+            alert('Password must be at least 6 characters long');
+            return;
+        }
+        if (!agreeTerms) {
+            alert('Please agree to the Terms of Service and Privacy Policy');
+            return;
+        }
+
+        const submitBtn = event.target.querySelector('.submit-btn');
+        submitBtn.textContent = 'Creating Account...';
+        submitBtn.disabled = true;
+
+        try {
+            const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+            const user = userCredential.user;
+            
+            await user.updateProfile({ displayName: name });
+            
+            await db.collection('users').doc(user.uid).set({
+                uid: user.uid,
+                name: name,
+                email: email,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            console.log('Registration successful:', user);
+            alert('Account created successfully!');
+        } catch (error) {
+            alert(`Registration Failed: ${error.message}`);
+        } finally {
+            submitBtn.textContent = 'Create Account';
+            submitBtn.disabled = false;
+        }
+    }
+
+    // Google Sign-In
+    const provider = new firebase.auth.GoogleAuthProvider();
+    
+    function handleGoogleSignIn() {
+        auth.signInWithPopup(provider)
+            .then((userCredential) => {
+                const user = userCredential.user;
+                console.log('Google Sign-In successful:', user);
+                
+                if (userCredential.additionalUserInfo.isNewUser) {
+                    db.collection('users').doc(user.uid).set({
+                        uid: user.uid,
+                        name: user.displayName,
+                        email: user.email,
+                        picture: user.photoURL,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+            })
+            .catch((error) => {
+                alert(`Google Sign-In Failed: ${error.message}`);
+            });
+    }
+
+    function handleLogout() {
+        auth.signOut().then(() => {
+            console.log('User signed out');
+        }).catch((error) => {
+            console.error('Sign out error:', error);
+        });
+    }
+
+    // Dashboard Functions
+    const pages = document.querySelectorAll('.page');
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    function showPage(pageId) {
+        pages.forEach(page => page.classList.add('hidden'));
+        const targetPage = document.getElementById(pageId);
+        if (targetPage) {
+            targetPage.classList.remove('hidden');
+        }
+
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('onclick') && link.getAttribute('onclick').includes(pageId)) {
+                link.classList.add('active');
+            }
+        });
+
+        const mainPages = ['home', 'services', 'about'];
+        if (!mainPages.includes(pageId)) {
+            navLinks[0].classList.add('active');
+            navLinks[1].classList.remove('active');
+            navLinks[2].classList.remove('active');
+        }
+        
+        if (pageId === 'hospital-finder' && !mapInitialized) {
+            loadGoogleMapsScript();
+        }
+    }
+    
+    // Profile & Audio Dropdown
+    document.addEventListener('DOMContentLoaded', function() {
+        const profileBtn = document.getElementById('profile-btn');
+        const profileDropdown = document.getElementById('profile-dropdown');
+        const audioToggleButton = document.getElementById('audio-toggle-btn');
+        
+        if (profileBtn && profileDropdown) {
+            profileBtn.addEventListener('click', () => {
+                const isHidden = profileDropdown.classList.contains('hidden');
+                if (isHidden) {
+                    profileDropdown.classList.remove('hidden');
+                    setTimeout(() => {
+                        profileDropdown.classList.remove('opacity-0', 'scale-95');
+                    }, 10);
+                } else {
+                    profileDropdown.classList.add('opacity-0', 'scale-95');
+                    setTimeout(() => {
+                        profileDropdown.classList.add('hidden');
+                    }, 300);
+                }
+            });
+        }
+        
+        window.addEventListener('click', (e) => {
+            if (profileBtn && profileDropdown && !profileBtn.contains(e.target) && !profileDropdown.contains(e.target)) {
+                profileDropdown.classList.add('opacity-0', 'scale-95');
+                setTimeout(() => {
+                    profileDropdown.classList.add('hidden');
+                }, 300);
+            }
+        });
+
+        if (audioToggleButton) {
+            audioToggleButton.addEventListener('click', () => {
+                isAudioEnabled = !isAudioEnabled;
+                window.speechSynthesis.cancel();
+                if (isAudioEnabled) {
+                    audioToggleButton.innerHTML = '<i class="fas fa-volume-up text-gray-600 text-xl"></i>';
+                } else {
+                    audioToggleButton.innerHTML = '<i class="fas fa-volume-mute text-gray-600 text-xl"></i>';
+                }
+            });
+        }
+
+        // Initialize event listeners after DOM is loaded
+        initializeEventListeners();
+    });
+
+    function initializeEventListeners() {
+        // Login form
+        const loginForm = document.getElementById('loginForm');
+        if (loginForm) {
+            loginForm.addEventListener('submit', handleLogin);
+        }
+
+        // Register form
+        const registerForm = document.getElementById('registerForm');
+        if (registerForm) {
+            registerForm.addEventListener('submit', handleRegister);
+        }
+
+        // Chat functionality
+        const sendBtn = document.getElementById('send-btn');
+        const chatInput = document.getElementById('chat-input');
+        const audioBtn = document.getElementById('audio-btn');
+        
+        if (sendBtn) sendBtn.addEventListener('click', handleSendMessage);
+        if (chatInput) chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSendMessage(); });
+        if (audioBtn) audioBtn.addEventListener('click', startSpeechRecognition);
+
+        // Prediction forms
+        const heartForm = document.getElementById('heart-form');
+        if (heartForm) {
+            heartForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const data = Object.fromEntries(formData.entries());
+                const resultContainer = document.getElementById('heart-prediction-result');
+                resultContainer.innerHTML = '';
+                const loaderId = `loader-${Date.now()}`;
+                displayLoader(loaderId, 'heart-prediction-result');
+
+                const prompt = `Based on the following data from a patient, provide a heart disease risk assessment (Low, Medium, High) and explain the reasoning. Data: ${JSON.stringify(data)}. This is for informational purposes only.`;
+                
+                try {
+                    const aiResponse = await callGeminiAPI(prompt);
+                    document.getElementById(loaderId)?.remove();
+                    resultContainer.innerHTML = `<h3 class="text-xl font-semibold mb-2">Risk Assessment</h3><div class="p-4 bg-gray-100 rounded-lg whitespace-pre-wrap">${aiResponse}</div>`;
+                    if (isAudioEnabled) {
+                        speakText("Heart disease risk prediction complete. " + aiResponse);
+                    }
+                } catch (error) {
+                    document.getElementById(loaderId)?.remove();
+                    resultContainer.innerHTML = `<p class="text-red-500">Prediction failed. Please try again.</p>`;
+                }
+            });
+        }
+
+        const strokeForm = document.getElementById('stroke-form');
+        if (strokeForm) {
+            strokeForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const data = Object.fromEntries(formData.entries());
+                const resultContainer = document.getElementById('stroke-prediction-result');
+                resultContainer.innerHTML = '';
+                const loaderId = `loader-${Date.now()}`;
+                displayLoader(loaderId, 'stroke-prediction-result');
+
+                const prompt = `Based on the following data from a patient, provide a stroke risk assessment (Low, Medium, High) and explain the reasoning. Data: ${JSON.stringify(data)}. This is for informational purposes only.`;
+                
+                try {
+                    const aiResponse = await callGeminiAPI(prompt);
+                    document.getElementById(loaderId)?.remove();
+                    resultContainer.innerHTML = `<h3 class="text-xl font-semibold mb-2">Risk Assessment</h3><div class="p-4 bg-gray-100 rounded-lg whitespace-pre-wrap">${aiResponse}</div>`;
+                    if (isAudioEnabled) {
+                        speakText("Stroke risk prediction complete. " + aiResponse);
+                    }
+                } catch (error) {
+                    document.getElementById(loaderId)?.remove();
+                    resultContainer.innerHTML = `<p class="text-red-500">Prediction failed. Please try again.</p>`;
+                }
+            });
+        }
+
+        // Imaging analysis
+        const analyzeBtn = document.getElementById('analyze-btn');
+        if (analyzeBtn) {
+            analyzeBtn.addEventListener('click', async () => {
+                if (!currentFileUpload) return;
+                const resultContainer = document.getElementById('analysis-result');
+                resultContainer.innerHTML = '';
+                const loaderId = `loader-${Date.now()}`;
+                displayLoader(loaderId, 'analysis-result');
+                analyzeBtn.disabled = true;
+                try {
+                    const base64Data = await fileToBase64(currentFileUpload);
+                    const mimeType = currentFileUpload.type;
+                    const prompt = "Analyze this medical image (like an X-ray or MRI) and provide a detailed report. Identify any potential anomalies, describe the visible structures, and give a preliminary assessment. This is for informational purposes only and not a medical diagnosis.";
+                    const aiResponse = await callGeminiAPI(prompt, base64Data, mimeType);
+                    document.getElementById(loaderId)?.remove();
+                    resultContainer.innerHTML = `<h3 class="text-xl font-semibold mb-2">Analysis Report</h3><div class="p-4 bg-gray-100 rounded-lg whitespace-pre-wrap">${aiResponse}</div>`;
+                    if (isAudioEnabled) {
+                        speakText("Image analysis complete. " + aiResponse);
+                    }
+                } catch (error) {
+                    document.getElementById(loaderId)?.remove();
+                    resultContainer.innerHTML = `<p class="text-red-500">Analysis failed. Please try again.</p>`;
+                } finally {
+                    analyzeBtn.disabled = false;
+                    removeFilePreview('imaging-preview-container');
+                    currentFileUpload = null;
+                }
+            });
+        }
+
+        // Drop zone functionality
+        const dropZone = document.getElementById('drop-zone');
+        if (dropZone) {
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('border-blue-500');
+            });
+
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('border-blue-500');
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('border-blue-500');
+                const file = e.dataTransfer.files[0];
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                const fileInput = document.getElementById('imaging-file-input');
+                if (fileInput) {
+                    fileInput.files = dataTransfer.files;
+                    handleFileSelect({ target: { files: [file] } }, 'imaging');
+                }
+            });
+        }
+    }
+
+    // File Handling
+    function handleFileSelect(event, module) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif'];
+        if (!allowedImageTypes.includes(file.type)) {
+            displayMessage('system', 'Invalid file type. Please upload a valid image (JPG, PNG, GIF).', 'chat-container');
+            event.target.value = '';
+            return;
+        }
+        currentFileUpload = file;
+        currentModule = module;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const previewContainerId = module === 'chat' ? 'chat-preview-container' : 'imaging-preview-container';
+            const previewContainer = document.getElementById(previewContainerId);
+            if (previewContainer) {
+                previewContainer.innerHTML = `
+                    <div class="relative inline-block mt-2">
+                        <img src="${e.target.result}" class="h-24 w-24 object-cover rounded-lg">
+                        <button onclick="removeFilePreview('${previewContainerId}')" class="absolute top-0 right-0 bg-red-500 text-white rounded-full h-6 w-6 flex items-center justify-center -mt-2 -mr-2">×</button>
+                    </div>`;
+                if (module === 'imaging') {
+                    const analyzeBtn = document.getElementById('analyze-btn');
+                    if (analyzeBtn) analyzeBtn.disabled = false;
+                }
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function removeFilePreview(containerId) {
+        const container = document.getElementById(containerId);
+        if (container) {
+            container.innerHTML = '';
+        }
+        currentFileUpload = null;
+        if (containerId.includes('imaging')) {
+            const analyzeBtn = document.getElementById('analyze-btn');
+            if (analyzeBtn) analyzeBtn.disabled = true;
+            const fileInput = document.getElementById('imaging-file-input');
+            if (fileInput) fileInput.value = '';
+        } else {
+            const fileInput = document.getElementById('chat-file-input');
+            if (fileInput) fileInput.value = '';
+        }
+    }
+
+    // Chat & AI Logic
+    async function handleSendMessage() {
+        const chatInput = document.getElementById('chat-input');
+        if (!chatInput) return;
+        
+        const userInput = chatInput.value.trim();
+        if (userInput === '' && !currentFileUpload) return;
+        
+        const userMessage = { sender: 'user', text: userInput, file: currentFileUpload };
+        
+        displayMessage(userMessage.sender, userMessage.text, 'chat-container', userMessage.file);
+        chatInput.value = '';
+        
+        const loaderId = `loader-${Date.now()}`;
+        displayLoader(loaderId, 'chat-container');
+        
+        try {
+            const prompt = userInput;
+            let base64Data = null, mimeType = null;
+            if (currentFileUpload) {
+                base64Data = await fileToBase64(currentFileUpload);
+                mimeType = currentFileUpload.type;
+                removeFilePreview('chat-preview-container');
+            }
+            
+            const aiResponse = await callGeminiAPI(prompt, base64Data, mimeType);
+            
+            document.getElementById(loaderId)?.remove();
+            
+            const aiMessage = { sender: 'ai', text: aiResponse };
+            displayMessage(aiMessage.sender, aiMessage.text, 'chat-container');
+
+            searchHistory.unshift({ user: userMessage, ai: aiMessage });
+            updateHistoryUI();
+
+            if (isAudioEnabled) {
+                speakText(aiResponse);
+            }
+        } catch (error) {
+            console.error("Error calling AI:", error);
+            document.getElementById(loaderId)?.remove();
+            displayMessage('system', 'Sorry, I encountered an error. Please try again.', 'chat-container');
+        }
+        currentFileUpload = null;
+    }
+        
+    // Audio Functions
+    let recognition = null;
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = 'en-US';
+        recognition.continuous = false;
+        recognition.interimResults = false;
+
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            const chatInput = document.getElementById('chat-input');
+            if (chatInput) {
+                chatInput.value = transcript;
+                handleSendMessage();
+            }
+        };
+
+        recognition.onend = () => {
+            const audioBtn = document.getElementById('audio-btn');
+            const chatInput = document.getElementById('chat-input');
+            if (audioBtn) audioBtn.classList.remove('text-red-500');
+            if (chatInput) chatInput.placeholder = "Type your message or describe the image...";
+        };
+
+        recognition.onerror = (event) => {
+            console.error('Speech recognition error:', event.error);
+            const audioBtn = document.getElementById('audio-btn');
+            const chatInput = document.getElementById('chat-input');
+            if (audioBtn) audioBtn.classList.remove('text-red-500');
+            if (chatInput) chatInput.placeholder = "Type your message or describe the image...";
+        };
+    }
+
+    function startSpeechRecognition() {
+        if (!recognition) {
+            alert('Speech recognition is not supported in your browser.');
+            return;
+        }
+        const audioBtn = document.getElementById('audio-btn');
+        const chatInput = document.getElementById('chat-input');
+        if (audioBtn) audioBtn.classList.add('text-red-500');
+        if (chatInput) chatInput.placeholder = "Listening...";
+        recognition.start();
+    }
+
+    function speakText(text) {
+        if (!isAudioEnabled) return;
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'en-US';
+        window.speechSynthesis.speak(utterance);
+    }
+
+    // UI Display Functions
+    function displayMessage(sender, text, containerId, file = null) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('flex', 'mb-4');
+        let bubbleClasses = 'p-3 rounded-lg';
+        let imageHtml = '';
+        
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const imgElement = messageDiv.querySelector('img');
+                if(imgElement) imgElement.src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+            imageHtml = `<img src="" class="max-w-xs rounded-lg mb-2">`;
+        }
+        
+        if (sender === 'user') {
+            messageDiv.classList.add('justify-end');
+            bubbleClasses += ' bg-blue-500 text-white';
+            messageDiv.innerHTML = `<div class="chat-bubble ${bubbleClasses}">${imageHtml}<p>${text}</p></div>`;
+        } else if (sender === 'ai') {
+            messageDiv.classList.add('justify-start');
+            bubbleClasses += ' bg-gray-200 text-gray-800';
+            messageDiv.innerHTML = `<div class="chat-bubble ${bubbleClasses}">${text}</div>`;
+        } else {
+            messageDiv.classList.add('justify-center');
+            messageDiv.innerHTML = `<p class="text-sm text-gray-500 italic">${text}</p>`;
+        }
+        
+        container.appendChild(messageDiv);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function displayLoader(id, containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        
+        const loaderDiv = document.createElement('div');
+        loaderDiv.id = id;
+        loaderDiv.classList.add('flex', 'justify-start', 'my-4');
+        loaderDiv.innerHTML = `<div class="loader"></div>`;
+        container.appendChild(loaderDiv);
+    }
+
+    // API & Utility Functions
+    function fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result.split(',')[1]);
+            reader.onerror = error => reject(error);
+        });
+    }
+
+    async function callGeminiAPI(prompt, base64Data = null, mimeType = null) {
+        const apiKey = "AIzaSyDbFn7neefZAvDBlSppLc8IK5goClcQNNk";
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+        
+        let parts = [{ text: prompt }];
+        if (base64Data && mimeType) {
+            parts.push({ inlineData: { mimeType: mimeType, data: base64Data } });
+        }
+        
+        const payload = { contents: [{ role: "user", parts: parts }] };
+        
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        
+        if (!response.ok) throw new Error(`API Error: ${response.status}`);
+        
+        const result = await response.json();
+        if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
+            return result.candidates[0].content.parts[0].text;
+        } else {
+            if (result.promptFeedback?.blockReason) return `Request blocked: ${result.promptFeedback.blockReason}.`;
+            return "I'm sorry, I couldn't generate a response.";
+        }
+    }
+    
+    // Google Maps Integration
+    function loadGoogleMapsScript() {
+        const apiKey = 'AIzaSyCGy6a4uoYGIL0fPQSIxUIQ6oUgi9JIzkQ'; 
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=initMap`;
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+        mapInitialized = true;
+    }
+
+    function initMap() {
+        const citySelect = document.getElementById('city-select');
+        if (!citySelect) return;
+        
+        const initialLocation = citySelect.value;
+        const [initialLat, initialLng] = initialLocation.split(',').map(Number);
+        const initialCenter = { lat: initialLat, lng: initialLng };
+
+        const mapElement = document.getElementById("map");
+        if (!mapElement) return;
+
+        map = new google.maps.Map(mapElement, {
+            center: initialCenter,
+            zoom: 10,
+        });
+
+        const hospitalData = [
+            { name: "Apollo Hospitals, Chennai", rating: 4, location: "13.0617,80.2526" },
+            { name: "Fortis Hospital, Bengaluru", rating: 4, location: "12.9372,77.6253" },
+            { name: "All India Institute of Medical Sciences (AIIMS), New Delhi", rating: 5, location: "28.5661,77.2100" },
+            { name: "Kokilaben Dhirubhai Ambani Hospital, Mumbai", rating: 4, location: "19.1412,72.8227" },
+            { name: "Yashoda Hospitals, Hyderabad", rating: 4, location: "17.4399,78.4983" }
+        ];
+
+        hospitalData.forEach(hospital => {
+            const [lat, lng] = hospital.location.split(',').map(Number);
+
+            if (!isNaN(lat) && !isNaN(lng)) {
+                const marker = new google.maps.Marker({
+                    position: { lat, lng },
+                    map: map,
+                    title: hospital.name,
+                });
+
+                const infowindow = new google.maps.InfoWindow({
+                    content: `<div><strong>${hospital.name}</strong><br>Rating: ${hospital.rating}/5</div>`,
+                });
+
+                marker.addListener("click", () => {
+                    infowindow.open({
+                        anchor: marker,
+                        map,
+                    });
+                });
+            }
+        });
+
+        // Add event listener for the dropdown
+        citySelect.addEventListener('change', function() {
+            const [newLat, newLng] = this.value.split(',').map(Number);
+            const newCenter = { lat: newLat, lng: newLng };
+            if (map) {
+                map.setCenter(newCenter);
+                map.setZoom(10);
+            }
+        });
+    }
+
+    // Make initMap available globally for Google Maps callback
+    window.initMap = initMap;
+</script>
+</body>
+</html>
